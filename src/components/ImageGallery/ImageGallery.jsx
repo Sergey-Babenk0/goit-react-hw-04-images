@@ -1,5 +1,5 @@
 import { ButtonLoadMore } from 'components/Button/Button';
-import { ImgageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
+import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import Loader from 'components/Loader/Loader';
 import { useState, useEffect } from 'react';
 import css from './image-gallery.module.css';
@@ -10,43 +10,47 @@ export const ImageGallery = props => {
   const [error, setError] = useState('null');
   const [status, setStatus] = useState('idle');
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState(props.value);
+  const [showLoadMore, setShowLoadMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (props.value) {
-      console.log('Изменился запрос');
-
+    if (query !== props.value) {
       setStatus('pending');
+      setIsLoading(true);
       setPage(1);
 
       setTimeout(() => {
         imagesAPI
           .fetchImages(props.value, page)
-          .then(pictures => {
-            console.log(pictures.hits);
-            setImages([...pictures.hits]);
+          .then(({ hits, totalHits }) => {
+            setImages([...hits]);
+            setQuery(props.value);
+            setShowLoadMore(page < Math.ceil(totalHits / 12));
             setStatus('resolved');
           })
           .catch(error => {
             setError(error);
             setStatus('rejected');
-          });
+          })
+          .finally(() => setIsLoading(false));
       }, 1500);
     }
-  }, [page, props.value]);
+  }, [page, props.value, query]);
 
   const imagesClear = () => {
     setImages([]);
   };
 
   const onLoad = () => {
+    setPage(prevState => prevState + 1);
     console.log(page);
-
-    imagesAPI.fetchImages(props.value, setPage(page + 1)).then(pictures => {
-      setPage(prevState => prevState + 1);
+    imagesAPI.fetchImages(props.value, page + 1).then(pictures => {
+      // setPage(prevState => prevState + 1);
       setImages(prevState => [...prevState, ...pictures.hits]);
     });
-    console.log(props.value);
     console.log(page);
+    console.log(props.value);
     console.log(images);
   };
 
@@ -68,7 +72,7 @@ export const ImageGallery = props => {
         <div className={css.ImageGallery}>
           {images.map(hit => {
             return (
-              <ImgageGalleryItem
+              <ImageGalleryItem
                 key={hit.id}
                 smallImage={hit.webformatURL}
                 largeImage={hit.largeImageURL}
@@ -77,7 +81,7 @@ export const ImageGallery = props => {
             );
           })}
         </div>
-        {images.length !== 0 && <ButtonLoadMore onLoad={onLoad} />}
+        {!isLoading && showLoadMore && <ButtonLoadMore onLoad={onLoad} />}
       </>
     );
   }
@@ -122,14 +126,14 @@ export const ImageGallery = props => {
 //   onLoad = () => {
 //     console.log(this.state.page);
 
-//     imagesAPI
-//       .fetchImages(this.props.value, this.state.page + 1)
-//       .then(pictures => {
-//         this.setState(prevState => ({
-//           page: prevState.page + 1,
-//           images: [...prevState.images, ...pictures.hits],
-//         }));
-//       });
+// imagesAPI
+//   .fetchImages(this.props.value, this.state.page + 1)
+//   .then(pictures => {
+//     this.setState(prevState => ({
+//       page: prevState.page + 1,
+//       images: [...prevState.images, ...pictures.hits],
+//     }));
+//   });
 //     console.log(this.props.value);
 //     console.log(this.state.page);
 //     console.log(this.state.images);

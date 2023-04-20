@@ -3,7 +3,7 @@ import css from './app.module.css';
 import { SearchBar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 
-export const App = () => {
+const App = () => {
   const [value, setValue] = useState('');
 
   const handleSearchFormSubmit = value => {
@@ -21,3 +21,5 @@ export const App = () => {
     </div>
   );
 };
+
+export { App };
